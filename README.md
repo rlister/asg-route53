@@ -1,5 +1,68 @@
 # asg-route53
 
+This was written primarily for CoreOS Etcd instances created as part
+of an AWS Autoscaling Group, using the method described at
+https://github.com/MonsantoCo/etcd-aws-cluster.
+
+Rather than adding the `etcd-aws-cluster` unit to every `proxy` client
+of your `etcd` cluster, `asg-route53` will add a `SRV` record to DNS
+for all the `etcd` hosts, so they can be discovered by proxy clients,
+as described at
+https://coreos.com/etcd/docs/latest/clustering.html#discovery.
+
+## How does it work?
+
+- Looks up instance metadata and queries `aws-sdk` for autoscaling group.
+- Looks up all instances for this autoscaling group.
+- Updates given DNS record in Route53 to contain all ASG instances.
+
+## Usage
+
+```
+docker pull rlister/asg-route53:latest
+docker run rlister/asg-route53:latest _etcd-server._tcp.example.com
+```
+
+## IAM policy required
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": "arn:aws:route53:::hostedzone/$zone_id",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "route53:GetChange"
+            ],
+            "Resource": "arn:aws:route53:::change/*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "route53:ListHostedZonesByName"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        },
+        {
+            "Action": [
+                "autoscaling:DescribeAutoScalingGroups",
+                "ec2:DescribeInstances",
+                "ec2:DescribeTags"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        }
+    ]
+}
+```
+
 ## Installation
 
 ### Binaries for linux and OSX
