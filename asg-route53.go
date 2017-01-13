@@ -159,6 +159,7 @@ func main() {
 	priority := flag.Int("priority", 0, "priority for SRV records")
 	weight := flag.Int("weight", 0, "weight for SRV records")
 	port := flag.Int("port", 2380, "port for SRV records")
+	zone_id := flag.String("zoneid", "", "Route53 Zone ID")
 	flag.Parse()
 
 	// DNS record to update is first cmdline arg
@@ -186,6 +187,9 @@ func main() {
 	}
 
 	// update DNS
-	zone_id := getHostedZones(parseZone(record))
+
+	if *zone_id == "" {
+		zone_id = getHostedZones(parseZone(record))
+	}
 	changeRecord(zone_id, &record, rectype, ips)
 }
