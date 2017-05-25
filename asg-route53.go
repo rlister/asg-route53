@@ -80,7 +80,7 @@ func getAutoscalingInstances(asg *string) []*string {
 }
 
 // get IPs for given instance IDs
-func getInstanceIpAddresses(ids []*string) []*string {
+func getInstanceIpAddresses(ids []*string, public_ip bool) []*string {
 	svc := ec2.New(session.New())
 
 	params := &ec2.DescribeInstancesInput{
@@ -92,7 +92,11 @@ func getInstanceIpAddresses(ids []*string) []*string {
 	var ips []*string
 	for _, reservation := range resp.Reservations {
 		for _, instance := range reservation.Instances {
+		    if public_ip {
+                        ips = append(ips, instance.PublicIpAddress)
+		    } else {
 			ips = append(ips, instance.PrivateIpAddress)
+		    }
 		}
 	}
 	return ips
@@ -154,6 +158,7 @@ func parseZone(record string) string {
 
 func main() {
 	// cmdline flags
+	public_ip := flag.Bool("public", false, "Use instance public id")
 	asg := flag.String("asg", "", "autoscaling group name")
 	rectype := flag.String("type", "SRV", "type of DNS records to create")
 	priority := flag.Int("priority", 0, "priority for SRV records")
@@ -175,7 +180,7 @@ func main() {
 
 	// get instance IPs
 	ids := getAutoscalingInstances(asg)
-	ips := getInstanceIpAddresses(ids)
+	ips := getInstanceIpAddresses(ids, *public_ip)
 
 	// mangle SRV records into required format
 	if *rectype == "SRV" {
