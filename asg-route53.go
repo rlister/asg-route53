@@ -3,14 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"os"
-	"strings"
 )
 
 // error handler
@@ -80,7 +81,7 @@ func getAutoscalingInstances(asg *string) []*string {
 }
 
 // get IPs for given instance IDs
-func getInstanceIpAddresses(ids []*string. ipType string) []*string {
+func getInstanceIpAddresses(ids []*string, ipType *string) []*string {
 	svc := ec2.New(session.New())
 
 	params := &ec2.DescribeInstancesInput{
@@ -92,10 +93,10 @@ func getInstanceIpAddresses(ids []*string. ipType string) []*string {
 	var ips []*string
 	for _, reservation := range resp.Reservations {
 		for _, instance := range reservation.Instances {
-			if ipType == "private" {
+			if *ipType == "private" {
 				ips = append(ips, instance.PrivateIpAddress)
 			}
-			if ipType == "public" {
+			if *ipType == "public" {
 				ips = append(ips, instance.PublicIpAddress)
 			}
 		}
@@ -164,7 +165,7 @@ func main() {
 	priority := flag.Int("priority", 0, "priority for SRV records")
 	weight := flag.Int("weight", 0, "weight for SRV records")
 	port := flag.Int("port", 2380, "port for SRV records")
-	ipType := flat.String("ipType", "private", "Use public or private ips")
+	ipType := flag.String("ipType", "private", "Use public or private ips")
 	flag.Parse()
 
 	// DNS record to update is first cmdline arg
