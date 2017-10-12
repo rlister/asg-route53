@@ -1,5 +1,6 @@
 # asg-route53
 
+
 This was written primarily for CoreOS Etcd instances created as part
 of an AWS Autoscaling Group, using the method described at
 https://github.com/MonsantoCo/etcd-aws-cluster.

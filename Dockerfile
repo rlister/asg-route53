@@ -1,7 +1,12 @@
-FROM scratch
+FROM golang:1.8
 MAINTAINER Ric Lister <rlister@gmail.com>
 
 ADD certs/ca-certificates.crt /etc/ssl/certs/
-ADD asg-route53 /
 
-ENTRYPOINT [ "/asg-route53" ]
+WORKDIR /go/src/asg-route53
+COPY . .
+
+RUN go get && \
+    go build -o /usr/bin/asg-route53
+
+ENTRYPOINT [ "asg-route53" ]
