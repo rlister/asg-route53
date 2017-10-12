@@ -80,7 +80,7 @@ func getAutoscalingInstances(asg *string) []*string {
 }
 
 // get IPs for given instance IDs
-func getInstanceIpAddresses(ids []*string) []*string {
+func getInstanceIpAddresses(ids []*string. ipType string) []*string {
 	svc := ec2.New(session.New())
 
 	params := &ec2.DescribeInstancesInput{
@@ -92,7 +92,12 @@ func getInstanceIpAddresses(ids []*string) []*string {
 	var ips []*string
 	for _, reservation := range resp.Reservations {
 		for _, instance := range reservation.Instances {
-			ips = append(ips, instance.PrivateIpAddress)
+			if ipType == "private" {
+				ips = append(ips, instance.PrivateIpAddress)
+			}
+			if ipType == "public" {
+				ips = append(ips, instance.PublicIpAddress)
+			}
 		}
 	}
 	return ips
@@ -159,6 +164,7 @@ func main() {
 	priority := flag.Int("priority", 0, "priority for SRV records")
 	weight := flag.Int("weight", 0, "weight for SRV records")
 	port := flag.Int("port", 2380, "port for SRV records")
+	ipType := flat.String("ipType", "private", "Use public or private ips")
 	flag.Parse()
 
 	// DNS record to update is first cmdline arg
@@ -175,7 +181,7 @@ func main() {
 
 	// get instance IPs
 	ids := getAutoscalingInstances(asg)
-	ips := getInstanceIpAddresses(ids)
+	ips := getInstanceIpAddresses(ids, ipType)
 
 	// mangle SRV records into required format
 	if *rectype == "SRV" {
